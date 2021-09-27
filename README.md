@@ -6,7 +6,7 @@ Alternatively, you can use the golang/mock package which is more robust, and lev
 
 ## Usage
 
-Embed `FlySpy.Spy` into the struct you have methods that you wish to spy on.  Then construct the spy struct using `flyspy.New()`
+Embed `FlySpy.Spy` into the struct that has methods to spy on.  Then construct the spy struct using `flyspy.New()`
 
 Example
 ```
