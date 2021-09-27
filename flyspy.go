@@ -2,14 +2,15 @@ package flyspy
 
 import (
     "time"
+    "sync"
 )
 
 // Arguments map of arguments and values
 type Arguments map[string]interface{}
 
 
-// MethodCallMap map of method call data
-type MethodCallMap map[string][]Invocation
+// Invocations map of method calls
+type Invocations map[string][]Invocation
 
 // Invocation represents information for a method call
 type Invocation struct {
@@ -17,27 +18,32 @@ type Invocation struct {
     Timestamp time.Time
 }
 
-// Method stores the method calls and arguments of a struct
-type Method struct {
-    Calls MethodCallMap
+// Spy stores the method calls and arguments of a struct
+type Spy struct {
+    Calls Invocations
+    sync.RWMutex
 }
 
-// NewMethod returns a new Method spy
-func NewMethod() Method {
-    c:= make(MethodCallMap)
-
-    return Method{
-        Calls: c,
+// New returns a new Spy
+func New() *Spy {
+    return &Spy{
+        Calls: make(Invocations),
     }
 }
 
-// Clean clears method call map
-func (m *Method) Clean() {
-    m.Calls = make(MethodCallMap)
+// Clean clears all the calls
+func (m *Spy) Clean() {
+    m.Lock()
+    defer m.Unlock()
+
+    m.Calls = make(Invocations)
 }
 
 // GetCalls returns the invocation list for the given method
-func (m *Method) GetCalls(method string) []Invocation {
+func (m *Spy) GetCalls(method string) []Invocation {
+    m.RLock()
+    defer m.RUnlock()
+
     if i, ok := m.Calls[method]; ok {
         return i
     }
@@ -46,7 +52,9 @@ func (m *Method) GetCalls(method string) []Invocation {
 }
 
 // AddCall registers new invocation for the given method
-func (m *Method) AddCall(method string, a Arguments) {
+func (m *Spy) AddCall(method string, a Arguments) {
+    m.Lock()
+    defer m.Unlock()
 
     i := Invocation{
         Args: a,
