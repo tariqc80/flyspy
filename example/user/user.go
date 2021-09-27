@@ -4,7 +4,9 @@ import (
 )
 
 // Model interface
-type Model interface{}
+type Model interface{
+    Find(int) error
+}
 
 type User struct {
     data DataProvider
@@ -14,7 +16,7 @@ type User struct {
 }
 
 type DataProvider interface {
-    Get(int, Model) error
+    Get(int) (Model, error)
     Store(Model) error
 }
 
@@ -34,22 +36,23 @@ func NewUserProvider() *UserProvider {
 
 func (u *User) Find(id int) error {
 
-    var model User
-    err := u.data.Get(id, &model)
+    model, err := u.data.Get(id)
 
     if err != nil {
         return err
     }
 
-    u.name = model.name
-    u.email = model.email
-    u.password = model.password
+    m := model.(*User)
+
+    u.name = m.name
+    u.email = m.email
+    u.password = m.password
 
     return nil
 }
 
-func (u *UserProvider) Get(id int, user *User) error {
-    return nil
+func (u *UserProvider) Get(id int) (*User, error) {
+    return nil, nil
 }
 
 func (u UserProvider) Store(user *User) error {

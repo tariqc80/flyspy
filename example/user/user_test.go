@@ -15,21 +15,18 @@ func NewTestUserProvider() *TestUserProvider{
     }
 }
 
-func (t *TestUserProvider) Get(id int, u Model) error {
+func (t *TestUserProvider) Get(id int) (Model, error) {
 
-    user := u.(*User)
+    // Call `RecordCall` to track this method call within our spy.
+    t.RecordCall("Get", id)
 
-    // Call `AddCall` to track this method call within out spy.
-    t.AddCall("Get", flyspy.Arguments{
-        "id": id,
-        "user": user,
-    })
+    var user User
 
     user.name = "Fred"
     user.email = "fred.flintstone@example.com"
     user.password = "bambampebbles"
 
-    return nil
+    return &user, nil
 }
 
 func (t *TestUserProvider) Store(u Model) error {
@@ -37,9 +34,7 @@ func (t *TestUserProvider) Store(u Model) error {
     user := u.(*User)
 
     // track this method call w/ agruments in our spy
-    t.AddCall("Store", flyspy.Arguments{
-        "user": user,
-    })
+    t.RecordCall("Store", user)
 
     return nil
 }
@@ -51,15 +46,8 @@ func TestFind (t *testing.T) {
 
     u.Find(1)
 
-    // Get all calls for the method `Get`
-    calls := p.GetCalls("Get")
-
-    // Get the args map from the first call
-    args := calls[0].Args
-
-    // Check if Get was called with the expected value for the argument `id`
-    if args["id"] != 1 {
-        t.Errorf("DataProvider.Get expected to be called with argument `id` of value `1`; got `%d`", args["id"])
+    if p.Once("Get").With(1) == false {
+        t.Errorf("DataProvider.Get expected to be called with argument of value `1``")
     }
 
     if u.name != "Fred" {
